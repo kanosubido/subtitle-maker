@@ -110,14 +110,16 @@ function setBackTime(){
     backTime = tb
 }
 video.addEventListener("timeupdate",function(){
-    let tp = parseInt(Math.round(video.currentTime)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+    now = video.currentTime
+    let tp = parseInt(Math.round(now)/60)+":"+fixNum(Math.round(now)%60,2)
 $("#timeNow").val(tp)
-localStorage.setItem("now",video.currentTime)
+localStorage.setItem("now",now)
 })
 video.addEventListener('pause',function(){
-    let tp = parseInt(Math.round(video.currentTime)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+    pause = video.currentTime
+    let tp = parseInt(Math.round(pause)/60)+":"+fixNum(Math.round(pause)%60,2)
 $("#timePause").val(tp)
-localStorage.setItem("time",video.currentTime)
+localStorage.setItem("time",pause)
 })
 $(document).bind("keydown",function(e){
     if(e.ctrlKey && e.which == 88){
@@ -209,8 +211,8 @@ var a = localStorage.getItem("copy")
 v.copy = JSON.parse(a)
 document.getElementById("text").value = localStorage.getItem('text')
 now =  localStorage.getItem('now')
-document.getElementById("timeNow").value = parseInt(Math.round(now)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+document.getElementById("timeNow").value = parseInt(Math.round(now)/60)+":"+fixNum(Math.round(now)%60,2)
 pause =  localStorage.getItem('time')
-document.getElementById("timePause").value = parseInt(Math.round(pause)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+document.getElementById("timePause").value = parseInt(Math.round(pause)/60)+":"+fixNum(Math.round(pause)%60,2)
 </script>
 </html>
