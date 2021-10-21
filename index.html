@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+</head>
+<body style="width: 100vw;height:100vh;overflow: hidden;padding: 5px;">
+    <div class="row mt-1 mb-1 ms-1 mb-1">
+        <div class="col">
+            <video οnfοcus="cdk()" src="" controls="controls" style="width: 1040px;height: 585px;" id="video"></video>
+        <div id="v" style="height: 170px;overflow-y: auto;">
+            <div v-for="(item,index) in copy" class="btn-group mt-1 ms-1" :style="item==''?'display:none':''">
+                <button class="btn btn-outline-secondary copy" @click="copyUrl(index)">
+                    {{item}}
+                </button>
+                <button class="btn btn-secondary" @click="deletethis(index)">✗</button>
+            </div>
+        </div>
+        </div>
+        <div class="col">
+            <textarea oninput="localStorage.setItem('text',this.value);" style="height: 80vh;width:100%;padding: 5px;" id="text"></textarea>
+            <div class="btn-group" style="width: 100%;">
+                <button class="btn btn-outline-primary" onclick="$('#files').click()">添加视频</button>
+                <button class="btn btn-outline-primary" onclick="$('#names').click()">添加人名</button>
+                <button class="btn btn-outline-primary" onclick="alert('Ctrl：视频暂停和开始'+
+                '\nCtrl+alt：倒退，每次回退时长可以设定'+
+                '\n点击「添加视频」添加需要翻译的视频'+
+                '\n点击「添加人名」，选择txt文件导入，每一行以及每个冒号分隔的内容会出现在左下角，点击内容，其会被复制到剪切板，点击「✗」会删除此项内容'+
+                '\n点击「返回当前时间」或「返回上次暂停时间」能让视频跳到所需时间\n当前时间、暂停时间、回退时间、导入的人名、翻译内容会缓存到浏览器内')">使用方式</button>
+            </div>
+            <div class="input-group mt-2">
+                <button class="input-group-text" onclick="backToTime(now)">返回当前时间</button>
+                <input type="text" class="form-control disabled" id="timeNow">
+                <button class="input-group-text" onclick="backToTime(pause)">返回上次暂停时间</button>
+                <input type="text" class="form-control disabled" id="timePause">
+            </div>
+            <div class="input-group mt-2">
+                <span class="input-group-text" onclick="backToTime(now)">回退时长（秒）</span>
+                <input type="text" class="form-control" id="timeBack" value="5">
+                <button class="input-group-text" onclick="setBackTime()">点此修改设定</button>
+            </div>
+            <input type="file" onchange="onChangeVideo()" id="files" style="display: none;">
+            <input type="file" onchange="onChangeFile()" id="names" style="display: none;">
+        </div>
+</body>
+<script>
+function onChangeVideo(event) {
+  let file = document.getElementById("files").files[0];
+  let url = URL.createObjectURL(file);
+  console.log(url);
+  document.getElementById("video").src = url;
+}
+
+var v = new Vue({
+    el:"#v",
+    data:{
+        copy:[]
+    },
+    methods:{
+        copyUrl(num) {
+            console.log(num)
+var Url2=document.getElementsByClassName("copy")[num].innerText;
+console.log(Url2);
+var oInput = document.createElement('input');
+oInput.value = Url2;
+document.body.appendChild(oInput);
+oInput.select();
+document.execCommand("Copy");
+oInput.className = 'oInput';
+oInput.style.display='none';
+},
+deletethis(num){
+    this.copy.splice(num,1)
+    localStorage.setItem("copy",JSON.stringify(this.copy))
+}
+    }
+})
+
+function onChangeFile() {
+    //获取读取我文件的File对象
+    let selectedFile = document.getElementById("names").files[0];
+    let name = selectedFile.name; //读取选中文件的文件名
+    let size = selectedFile.size; //读取选中文件的大小
+    console.log("文件名:" + name + "大小:" + size);
+    let reader = new FileReader(); //这是核心,读取操作就是由它完成.
+    reader.readAsText(selectedFile); //读取文件的内容,也可以读取文件的URL
+    reader.onload = function() {
+    let text = this.result.split(/[\n|\r|：]/)
+    v.copy = text
+    console.log(text)
+    localStorage.setItem("copy",JSON.stringify(v.copy))
+  }
+}
+var video = document.getElementById("video")
+var back = false
+var now = 0,pause = 0
+console.log(localStorage.getItem("backtime"))
+var backTime = 5
+
+if(localStorage.getItem("backtime") != null){
+    backTime = Number(localStorage.getItem("backtime"))
+    $("#timeBack").val(backTime)
+}
+function setBackTime(){
+    let tb = $("#timeBack").val()
+    localStorage.setItem("backtime",tb)
+    backTime = tb
+}
+video.addEventListener("timeupdate",function(){
+    let tp = parseInt(Math.round(video.currentTime)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+$("#timeNow").val(tp)
+localStorage.setItem("now",video.currentTime)
+})
+video.addEventListener('pause',function(){
+    let tp = parseInt(Math.round(video.currentTime)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+$("#timePause").val(tp)
+localStorage.setItem("time",video.currentTime)
+})
+$(document).bind("keydown",function(e){
+    if(e.ctrlKey && e.which == 88){
+        console.log('CTRL+X')
+        back = true
+    }
+    if(e.ctrlKey && e.which == 65){
+        console.log('CTRL+A')
+        back = true
+    }
+    if(e.ctrlKey && e.which == 67){
+        console.log('CTRL+C')
+        back = true
+    }
+    if(e.ctrlKey && e.which == 86){
+        console.log('CTRL+V')
+        back = true
+    }
+    if(e.ctrlKey && e.which == 90){
+        console.log('CTRL+Z')
+        back = true
+    }
+    if(e.ctrlKey && e.which == 18){
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('CTRL+Alt')
+        back = true
+        video.currentTime -= backTime
+        return false
+　　}
+})
+$(document).keyup(function(e){
+    if(e.which == 17){
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('CTRL+Alt')
+        if(back == false){
+            if(video.paused){
+             video.play()
+            }else{
+             video.pause()
+            }
+        }else{
+            back = false
+        }
+        return false
+　　}
+//     if(e.ctrlKey && e.which == 18){
+//         e.preventDefault();
+//         e.stopPropagation();
+//         console.log('CTRL+Alt')
+//         back = true
+//         video.currentTime -= backTime
+//         return false
+// 　　}
+//     if(e.ctrlKey && e.which == 37){
+//         e.preventDefault();
+//         e.stopPropagation();
+//         console.log('CTRL+Left')
+//         video.currentTime --
+//         return false
+// 　　}
+//     if(e.ctrlKey && e.which == 39){
+//         e.preventDefault();
+//         e.stopPropagation();
+//         console.log('CTRL+Right')
+//         video.currentTime ++
+//         return false
+// 　　}
+//     if(e.ctrlKey && e.which == 32){
+//         e.preventDefault();
+//         e.stopPropagation();
+//         console.log('CTRL+Space')
+//         if(video.paused){
+//              video.play()
+//         }else{
+//              video.pause()
+//         }
+//         return false
+// 　　}
+});
+function backToTime(time){
+    video.currentTime = time
+}
+function fixNum(num, length) {
+    return ('' + num).length < length ? ((new Array(length + 1)).join('0') + num).slice(-length) : '' + num
+}//数字に0を足すfunction
+var a = localStorage.getItem("copy")
+v.copy = JSON.parse(a)
+document.getElementById("text").value = localStorage.getItem('text')
+now =  localStorage.getItem('now')
+document.getElementById("timeNow").value = parseInt(Math.round(now)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+pause =  localStorage.getItem('time')
+document.getElementById("timePause").value = parseInt(Math.round(pause)/60)+":"+fixNum(Math.round(video.currentTime)%60,2)
+</script>
+</html>
